@@ -1,0 +1,1 @@
+Agente de negociação do ResolveBank responsável por autenticar clientes, apresentar dívidas do cartão, negociar propostas personalizadas, emitir boleto e orientar sobre envio de comprovantes e permitir recebimento de comprovante.
