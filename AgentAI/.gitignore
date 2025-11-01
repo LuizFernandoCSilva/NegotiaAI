@@ -1,0 +1,51 @@
+# Ambiente
+.env
+.venv
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Testes
+test_*.py
+*.test.py
+
+# Prisma
+node_modules/
+
+# Docker
+volumes/
+
+# Dados
+dados/comprovantes/*
+!dados/comprovantes/.gitkeep
+data/comprovantes/*
+!data/comprovantes/.gitkeep
+data/logs/*
+!data/logs/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Backups da migracao
+backup_estrutura_antiga_*/
+
+# Scripts temporários
+run.bat
+*.bat
