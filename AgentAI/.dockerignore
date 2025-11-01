@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+
+# Logs
+*.log
+logs/
+data/logs/
+
+# Database
+*.db
+*.sqlite
+volumes/
+
+# Backups da migração
+backup_*/
+
+# Frontend (não precisa no backend)
+frontend/
+
+# Arquivos de configuração local
+.env.local
+.env.*.local
+
+# Temporários
+tmp/
+temp/
+*.tmp
+data/comprovantes/temp_*
+
+# Documentação
+docs/
+*.md
+!README.md
+
+# Testes
+tests/
+test_*.py
+*_test.py
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker override
+docker-compose.override.yml
