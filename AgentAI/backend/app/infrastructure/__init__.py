@@ -1,0 +1,1 @@
+"""Infrastructure Layer - Detalhes técnicos"""
