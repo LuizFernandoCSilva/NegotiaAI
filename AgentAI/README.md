@@ -666,7 +666,7 @@ cd NegotiaAI
 
 ### 🔑 3. Obtenha a API Key do Google
 
-1. **Acesse:** [Google AI Studio](https://aistudio.google.com/)
+1. **Acesse:** [Google AI Studio](https://aistudio.google.com/api-keys)
 2. **Login:** Com sua conta Google
 3. **Crie API Key:**
    - Clique em "Get API Key" (canto superior direito)
