@@ -225,6 +225,8 @@ ERRO DO SISTEMA (mensagens comecam com "[SISTEMA] Erro"):
 - CPF invalido: "Nao consegui identificar um CPF valido. Por favor, envie somente seu CPF (11 digitos, apenas numeros)."
 - Sem boleto: "Identifiquei seu CPF, mas voce ainda nao possui um boleto gerado."
 - CPF diferente: "ATENCAO! Este comprovante pertence a outro CPF. Envie o comprovante CORRETO da sua negociacao."
+- BOLETO_VENCIDO: "Infelizmente, nao posso aceitar este comprovante pois o pagamento foi realizado APOS o vencimento do boleto. Pagamentos com atraso nao sao permitidos pelo sistema. Por favor, realize o pagamento DENTRO DO PRAZO de vencimento e envie o comprovante novamente."
+- VENCIMENTO_DIVERGENTE: "O comprovante enviado nao corresponde ao boleto gerado para voce. As datas de vencimento nao conferem. Por favor, envie o comprovante CORRETO do boleto que foi gerado nesta negociacao."
 
 Se NAO:
 "Sem problemas! Quando fizer o pagamento, pode enviar por aqui. Estarei a disposicao!"
