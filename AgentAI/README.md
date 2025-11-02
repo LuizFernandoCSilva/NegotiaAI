@@ -662,6 +662,7 @@ git clone git@github.com:LuizFernandoCSilva/NegotiaAI.git
 
 # Entre no diretório
 cd NegotiaAI
+cd AgentAI
 ```
 
 ### 🔑 3. Obtenha a API Key do Google
@@ -760,7 +761,7 @@ docker exec -it negotiaai-db psql -U negotiaai_user -d negotiaai_db -c "\dt"
 
 # Executar seed
 cd backend
-docker-compose exec negotiaai-backend python backend/seed_runner.py,3
+docker-compose exec negotiaai-backend python backend/seed_runner.py
 # Saída esperada:
 # ✅ Tabelas criadas com sucesso!
 # ✅ 3 clientes inseridos
