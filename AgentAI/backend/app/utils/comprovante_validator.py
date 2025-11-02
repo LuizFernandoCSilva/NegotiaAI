@@ -248,29 +248,35 @@ class ComprovanteValidator:
                 'data_pagamento': None
             }
         
-        # Converter data_vencimento_esperada para datetime se for string
         if isinstance(data_vencimento_esperada, str):
+            s = data_vencimento_esperada
             try:
-                data_vencimento_esperada = datetime.strptime(data_vencimento_esperada, '%Y-%m-%d')
-            except:
-                try:
-                    data_vencimento_esperada = datetime.strptime(data_vencimento_esperada, '%d/%m/%Y')
-                except:
+                data_vencimento_esperada = datetime.fromisoformat(s)
+            except Exception:
+                parsed = None
+                for fmt in ('%Y-%m-%d', '%d/%m/%Y'):
+                    try:
+                        data_vencimento_esperada = datetime.strptime(s.split('T')[0], fmt)
+                        parsed = True
+                        break
+                    except Exception:
+                        continue
+                if not parsed:
                     return {
                         'valido': False,
                         'mensagem': f'Erro ao processar data de vencimento: formato inválido ({data_vencimento_esperada})'
                     }
         
-        pagamento_valido = data_pagamento.date() <= data_vencimento_esperada.date()
+        pagamento_no_prazo = data_pagamento.date() <= data_vencimento_esperada.date()
         
-        if pagamento_valido:
-            mensagem = f'Pagamento realizado antes do vencimento'
+        if pagamento_no_prazo:
+            mensagem = f'Pagamento realizado dentro do prazo'
         else:
             dias_atraso = (data_pagamento.date() - data_vencimento_esperada.date()).days
-            mensagem = f'ATENÇÃO: Pagamento realizado {dias_atraso} dia(s) APÓS o vencimento'
+            mensagem = f'PAGAMENTO COM ATRASO: {dias_atraso} dia(s) após o vencimento. Não é permitido.'
         
         return {
-            'valido': pagamento_valido,
+            'valido': pagamento_no_prazo,  # SÓ é válido se pagamento for antes ou no dia do vencimento
             'mensagem': mensagem,
             'data_vencimento': data_vencimento_esperada.strftime('%d/%m/%Y'),
             'data_pagamento': data_pagamento.strftime('%d/%m/%Y'),
@@ -340,6 +346,43 @@ class ComprovanteValidator:
             return None
         except Exception as e:
             logger.error(f"Erro ao extrair data: {e}")
+            return None
+
+    def extrair_data_de_vencimento(self, file_path: str) -> Optional[datetime]:
+        """Extrai a data de vencimento do documento procurando por 'vencimento' ou variações.
+        Retorna datetime ou None."""
+        try:
+            texto = self._extrair_texto(file_path)
+            if not texto or len(texto.strip()) < 10:
+                return None
+
+            keywords = ['vencimento', 'venc.', 'venc']
+            # procurar linha que contenha a palavra vencimento
+            for line in texto.splitlines():
+                low = line.lower()
+                if any(k in low for k in keywords):
+                    m = re.search(r'(\d{2})[/-](\d{2})[/-](\d{4})', line)
+                    if m:
+                        try:
+                            dia, mes, ano = int(m.group(1)), int(m.group(2)), int(m.group(3))
+                            return datetime(ano, mes, dia)
+                        except ValueError:
+                            continue
+
+            # fallback: procurar qualquer data no documento (primeira encontrada)
+            padroes = [r'(\d{2})[/-](\d{2})[/-](\d{4})', r'(\d{2})[/-](\d{2})[/-](\d{2})']
+            for padrao in padroes:
+                matches = re.findall(padrao, texto)
+                for match in matches:
+                    try:
+                        ano = int(match[2]) + 2000 if len(match[2]) == 2 else int(match[2])
+                        data = datetime(ano, int(match[1]), int(match[0]))
+                        return data
+                    except Exception:
+                        continue
+            return None
+        except Exception as e:
+            logger.error(f"Erro ao extrair data de vencimento: {e}")
             return None
     
     def _buscar_cpf_no_texto(self, texto: str) -> Optional[str]:
