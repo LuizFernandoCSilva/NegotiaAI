@@ -825,7 +825,7 @@ docker-compose restart negotiaai-backend
 # Parar todos os serviços
 docker-compose down
 
-# Parar e remover volumes (⚠️ apaga dados!)
+# Parar e remover volumes ( apaga dados!)
 docker-compose down -v
 
 # Rebuild completo
@@ -849,14 +849,12 @@ cat backup.sql | docker exec -i negotiaai-db psql -U negotiaai_user -d negotiaai
 cd backend
 python seed_runner.py
 
-# Limpar dados (⚠️ cuidado!)
+# Limpar dados ( cuidado!)
 docker exec -it negotiaai-db psql -U negotiaai_user -d negotiaai_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 ```
 
-## 📝 Notas Importantes
-
 <div align="center">
 
-**🚀 Desenvolvido com ❤️ pela Tech4Humans**
+**🚀 Desenvolvido por Luiz Fernando**
 
 </div>
