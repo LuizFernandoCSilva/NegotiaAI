@@ -31,8 +31,14 @@ def processar_comprovante_from_path(temp_path: str, original_filename: str, vali
     try:
         validator = get_validator()
 
+        try:
+            texto_extraido = validator.extrair_texto(str(temp_path_obj)) or ''
+        except Exception:
+            texto_extraido = ''
+
         cpf_extraido = validator.extrair_cpf_do_comprovante(str(temp_path_obj))
         data_pagamento = validator.extrair_data_do_pagamento(str(temp_path_obj))
+        data_vencimento_doc = validator.extrair_data_de_vencimento(str(temp_path_obj))
 
         if not cpf_extraido:
             os.unlink(temp_path)
@@ -75,14 +81,52 @@ def processar_comprovante_from_path(temp_path: str, original_filename: str, vali
         data_vencimento_boleto = boleto.get('data_vencimento')
 
         try:
-            if not verificar_data_vencimento(boleto.get('data_vencimento'), data_pagamento):
+            if data_vencimento_doc:
+                if data_pagamento and data_pagamento.date() > data_vencimento_doc.date():
+                    os.unlink(temp_path)
+                    dias_atraso = (data_pagamento.date() - data_vencimento_doc.date()).days
+                    return {
+                        'erro': 'BOLETO_VENCIDO',
+                        'mensagem': f'Pagamento com atraso não é permitido. O comprovante indica pagamento em {data_pagamento.strftime("%d/%m/%Y")}, que é {dias_atraso} dia(s) após o vencimento ({data_vencimento_doc.strftime("%d/%m/%Y")}).' 
+                    }
+
+                banco_venc = boleto.get('data_vencimento')
+                banco_dt = None
+                try:
+                    from datetime import datetime as _dt
+                    if isinstance(banco_venc, str):
+                        try:
+                            banco_dt = _dt.fromisoformat(banco_venc)
+                        except Exception:
+                            try:
+                                banco_dt = _dt.strptime(banco_venc.split('T')[0], '%Y-%m-%d')
+                            except Exception:
+                                try:
+                                    banco_dt = _dt.strptime(banco_venc, '%d/%m/%Y')
+                                except Exception:
+                                    banco_dt = None
+                    elif hasattr(banco_venc, 'date'):
+                        banco_dt = banco_venc
+                except Exception:
+                    banco_dt = None
+
+                if banco_dt:
+                    if data_vencimento_doc.date() != banco_dt.date():
+                        os.unlink(temp_path)
+                        return {
+                            'erro': 'VENCIMENTO_DIVERGENTE',
+                            'mensagem': f'Data de vencimento no documento ({data_vencimento_doc.strftime("%d/%m/%Y")}) diverge da data cadastrada ({banco_dt.strftime("%d/%m/%Y")}).'
+                        }
+
+            venc_ok = verificar_data_vencimento(boleto.get('data_vencimento'), data_pagamento)
+            if not venc_ok:
                 os.unlink(temp_path)
                 return {
                     'erro': 'BOLETO_VENCIDO',
-                    'mensagem': f'O boleto associado ao CPF {cpf_extraido} parece estar vencido em relação à data do comprovante.'
+                    'mensagem': f'O boleto associado ao CPF {cpf_extraido} está vencido. Pagamento com atraso não é permitido.'
                 }
         except Exception:
-            pass
+            logger.exception("Erro ao verificar data de vencimento do comprovante")
         
         if validar:
             validacao = validator.validar_comprovante(
@@ -90,7 +134,8 @@ def processar_comprovante_from_path(temp_path: str, original_filename: str, vali
                 cpf_esperado=cpf_extraido,
                 valor_esperado=valor_boleto,
                 data_vencimento_esperada=data_vencimento_boleto
-            )            
+            )
+
             if not validacao['valido']:
                 os.unlink(temp_path)
                 return {
