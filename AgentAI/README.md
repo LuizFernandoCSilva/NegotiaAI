@@ -666,7 +666,7 @@ cd NegotiaAI
 
 ### 🔑 3. Obtenha a API Key do Google
 
-1. **Acesse:** [Google AI Studio](https://aistudio.google.com/api-keys)
+1. **Acesse:** [Google AI Studio](https://aistudio.google.com/)
 2. **Login:** Com sua conta Google
 3. **Crie API Key:**
    - Clique em "Get API Key" (canto superior direito)
@@ -740,19 +740,15 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 🐳 6. Inicie o Banco de Dados
+### 🐳 6. Inicie o Sistema
 
 ```powershell
-# Subir apenas o PostgreSQL
-docker-compose up -d negotiaai-db
+#Build o sistema
+docker-compose build --no-cache
+# Suba o sistema
+docker-compose up -d
 
-# Verificar logs
-docker logs negotiaai-db -f
-
-# Aguarde a mensagem:
-# "database system is ready to accept connections"
-
-# Testar conexão
+# Testar conexão com o banco de dados
 docker exec -it negotiaai-db psql -U negotiaai_user -d negotiaai_db -c "\dt"
 ```
 
@@ -764,23 +760,12 @@ docker exec -it negotiaai-db psql -U negotiaai_user -d negotiaai_db -c "\dt"
 
 # Executar seed
 cd backend
-python seed_runner.py
-
+docker-compose exec negotiaai-backend python backend/seed_runner.py,3
 # Saída esperada:
 # ✅ Tabelas criadas com sucesso!
 # ✅ 3 clientes inseridos
 # ✅ 9 planos de pagamento inseridos
 ```
-
-
-## 🎮 Como Executar
-
-### 🚀 Método 1: Docker Compose (Recomendado para Produção)
-
-```powershell
-# Subir todos os serviços
-docker-compose up -d
-
 # Verificar status
 docker-compose ps
 
@@ -791,6 +776,8 @@ docker-compose logs -f
 # Backend: http://localhost:5000
 # Docs: http://localhost:5000/api/docs
 # Frontend: http://localhost:8501
+
+# Cpf de usuários para teste: 30131864025 - João da Silva, 98765432100 - Maria Oliveira, 15263533004 - Carlos Pereira
 ```
 ## 📡 Endpoints da API
 
