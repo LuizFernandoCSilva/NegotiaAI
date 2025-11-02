@@ -749,8 +749,6 @@ docker-compose build --no-cache
 # Suba o sistema
 docker-compose up -d
 
-# Testar conexão com o banco de dados
-docker exec -it negotiaai-db psql -U negotiaai_user -d negotiaai_db -c "\dt"
 ```
 
 ### 🌱 7. Execute o Seed do Banco
