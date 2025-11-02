@@ -306,12 +306,28 @@ class ComprovanteValidator:
             texto = self._extrair_texto(file_path)
             if not texto or len(texto.strip()) < 10:
                 return None
-            
+            keywords = [
+                'data do pagamento', 'data pagamento', 'data de pagamento',
+                'data do recibo', 'pago em', 'pagamento realizado', 'data pagamento:'
+            ]
+
+            for line in texto.splitlines():
+                low = line.lower()
+                if any(k in low for k in keywords):
+                    m = re.search(r'(\d{2})[/-](\d{2})[/-](\d{4})', line)
+                    if m:
+                        try:
+                            dia, mes, ano = int(m.group(1)), int(m.group(2)), int(m.group(3))
+                            return datetime(ano, mes, dia)
+                        except ValueError:
+                            continue
+
+            # Se não encontrar por contexto, cai para busca geral: primeiro com ano 4 dígitos, depois 2 dígitos
             padroes = [
                 r'(\d{2})[/-](\d{2})[/-](\d{4})',
                 r'(\d{2})[/-](\d{2})[/-](\d{2})',
             ]
-            
+
             for padrao in padroes:
                 matches = re.findall(padrao, texto)
                 for match in matches:
