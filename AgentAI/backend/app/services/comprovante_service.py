@@ -27,7 +27,6 @@ def processar_comprovante_from_path(temp_path: str, original_filename: str, vali
     
     temp_path_obj = Path(temp_path)
     
-    
     try:
         validator = get_validator()
 
@@ -41,6 +40,7 @@ def processar_comprovante_from_path(temp_path: str, original_filename: str, vali
         data_vencimento_doc = validator.extrair_data_de_vencimento(str(temp_path_obj))
 
         if not cpf_extraido:
+            texto_debug = texto_extraido[:500] if texto_extraido else ''
             os.unlink(temp_path)
 
             if not validator.tesseract_available:
@@ -48,7 +48,7 @@ def processar_comprovante_from_path(temp_path: str, original_filename: str, vali
                     'erro': 'CPF_NAO_ENCONTRADO',
                     'mensagem': 'Não foi possível identificar o CPF no comprovante. O Tesseract OCR não está instalado.',
                     'detalhes': {
-                        'texto_extraido': validator.extrair_texto(str(temp_path_obj))[:500]
+                        'texto_extraido': texto_debug
                     }
                 }
 
@@ -56,7 +56,7 @@ def processar_comprovante_from_path(temp_path: str, original_filename: str, vali
                 'erro': 'CPF_NAO_ENCONTRADO',
                 'mensagem': 'Não foi possível identificar o CPF no comprovante enviado.',
                 'detalhes': {
-                    'texto_extraido': validator.extrair_texto(str(temp_path_obj))[:500]
+                    'texto_extraido': texto_debug
                 }
             }
 
