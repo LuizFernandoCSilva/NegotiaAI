@@ -124,7 +124,9 @@ class ComprovanteValidator:
                     if images:
                         texto = pytesseract.image_to_string(images[0], lang='por')
                 except ImportError:
-                    pass
+                    logger.error("pdf2image não disponível para fallback OCR")
+                except Exception as e:
+                    logger.error(f"Erro no fallback OCR: {e}")
         except Exception as e:
             logger.error(f"Erro ao extrair texto do PDF: {e}")
         return texto
@@ -211,10 +213,6 @@ class ComprovanteValidator:
         }
     
     def _validar_data_vencimento(self, texto: str, data_vencimento_esperada: datetime) -> Dict:
-        """
-        Valida se a data do pagamento extraída do comprovante é anterior ou igual à data de vencimento do boleto.
-        Retorna inválido se o pagamento foi feito após o vencimento.
-        """
         padroes = [
             r'(?:data|pagamento|pago em|realizado em)[:\s]*(\d{2})[/-](\d{2})[/-](\d{4})',
             r'(\d{2})[/-](\d{2})[/-](\d{4})',
@@ -276,11 +274,10 @@ class ComprovanteValidator:
             mensagem = f'PAGAMENTO COM ATRASO: {dias_atraso} dia(s) após o vencimento. Não é permitido.'
         
         return {
-            'valido': pagamento_no_prazo,  # SÓ é válido se pagamento for antes ou no dia do vencimento
+            'valido': pagamento_no_prazo,
             'mensagem': mensagem,
             'data_vencimento': data_vencimento_esperada.strftime('%d/%m/%Y'),
-            'data_pagamento': data_pagamento.strftime('%d/%m/%Y'),
-            'dias_diferenca': (data_vencimento_esperada.date() - data_pagamento.date()).days
+            'data_pagamento': data_pagamento.strftime('%d/%m/%Y')
         }
     
     def _validar_palavras_chave(self, texto: str) -> Dict:
@@ -328,7 +325,6 @@ class ComprovanteValidator:
                         except ValueError:
                             continue
 
-            # Se não encontrar por contexto, cai para busca geral: primeiro com ano 4 dígitos, depois 2 dígitos
             padroes = [
                 r'(\d{2})[/-](\d{2})[/-](\d{4})',
                 r'(\d{2})[/-](\d{2})[/-](\d{2})',
@@ -349,15 +345,12 @@ class ComprovanteValidator:
             return None
 
     def extrair_data_de_vencimento(self, file_path: str) -> Optional[datetime]:
-        """Extrai a data de vencimento do documento procurando por 'vencimento' ou variações.
-        Retorna datetime ou None."""
         try:
             texto = self._extrair_texto(file_path)
             if not texto or len(texto.strip()) < 10:
                 return None
 
             keywords = ['vencimento', 'venc.', 'venc']
-            # procurar linha que contenha a palavra vencimento
             for line in texto.splitlines():
                 low = line.lower()
                 if any(k in low for k in keywords):
@@ -369,7 +362,6 @@ class ComprovanteValidator:
                         except ValueError:
                             continue
 
-            # fallback: procurar qualquer data no documento (primeira encontrada)
             padroes = [r'(\d{2})[/-](\d{2})[/-](\d{4})', r'(\d{2})[/-](\d{2})[/-](\d{2})']
             for padrao in padroes:
                 matches = re.findall(padrao, texto)
@@ -386,26 +378,32 @@ class ComprovanteValidator:
             return None
     
     def _buscar_cpf_no_texto(self, texto: str) -> Optional[str]:
-        cpf_formatado = re.findall(r'\d{3}\.\d{3}\.\d{3}-\d{2}', texto)
-        if cpf_formatado:
-            return re.sub(r'[.\-]', '', cpf_formatado[0])
-        cpf_apos_label = re.findall(r'CPF\s*:\s*(\d{11})', texto, re.IGNORECASE)
-        if cpf_apos_label:
-            return cpf_apos_label[0]
-        cpf_sem_formato = re.findall(r'\b\d{11}\b', texto)
-        if cpf_sem_formato:
-            return cpf_sem_formato[0]
-        cpf_espacos = re.findall(r'\b\d{3}\s\d{3}\s\d{3}\s\d{2}\b', texto)
-        if cpf_espacos:
-            return re.sub(r'\s', '', cpf_espacos[0])
+        if not texto:
+            return None
+            
+        texto_limpo = texto.replace('\n', ' ').replace('\r', ' ')
+        
+        patterns = [
+            r'CPF\s*[:\s]*\s*(\d{3}[\.\s]?\d{3}[\.\s]?\d{3}[\-\s]?\d{2})',
+            r'(?:CPF|cpf)\s*(?:do\s+pagador)?[:\s]*\s*(\d{3}[\.\s]?\d{3}[\.\s]?\d{3}[\-\s]?\d{2})',
+            r'\b(\d{3}\.?\d{3}\.?\d{3}\-?\d{2})\b',
+            r'\b(\d{11})\b',
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, texto_limpo, re.IGNORECASE)
+            if matches:
+                cpf_bruto = matches[0]
+                cpf_numeros = re.sub(r'[^\d]', '', cpf_bruto)
+                if len(cpf_numeros) == 11:
+                    return cpf_numeros
+        
         return None
 
 
-# Instância singleton
 _validator_instance = None
 
 def get_validator() -> ComprovanteValidator:
-    """Retorna instância singleton do validador (OCR apenas)."""
     global _validator_instance
     if _validator_instance is None:
         _validator_instance = ComprovanteValidator()
